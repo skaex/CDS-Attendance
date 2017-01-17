@@ -1,0 +1,27 @@
+<ion-modal-view>
+  <ion-header-bar>
+    <h1 class="title">New CDS Meeting</h1>
+    <div class="buttons">
+      <button class="button button-outline  button-balanced" ng-click="closeNewMeeting()">Cancel</button>
+    </div>
+  </ion-header-bar>
+  <ion-content>
+    <form ng-submit="startNewMeeting()">
+        <div class="list">
+          <label class="item item-input item-stacked-label">
+            <span class="input-label">CDS Group</span>
+            <input type="text" style="text-transform: uppercase" placeholder="IT" ng-model="newMeetingData.cdsGroup" required>
+          </label>
+          <label class="item item-input item-stacked-label">
+            <span class="input-label">Date</span>
+            <input type="date" placeholder="01/01/14" ng-model="newMeetingData.meetingDate" required>
+          </label>
+          <div class="padding">
+             <button type="submit" class="button button-outline button-block button-balanced">
+              Start
+            </button>
+          </div>
+        </div>
+    </form>
+  </ion-content>
+</ion-modal-view>

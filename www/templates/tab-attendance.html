@@ -1,0 +1,29 @@
+<ion-view view-title="Attendance">
+  <ion-content>
+<div class="card">
+  <div class="item item-text-wrap">
+    {{ attendance.meeting.cdsGroup }} CDS Group's Attendance on {{ attendance.meeting.meetingDate }}
+  </div>
+</div>
+<div class="padding">
+ <button ng-click="take()" class="button button-outline button-block button-balanced">
+  Take <span class="badge badge-balanced" style="font-size: 80%">#{{ counta + 1 }}</span>
+</button>
+</div>
+<div class="card">
+  <div class="item item-text-wrap">
+   <span style="font-size: 80%">{{ response.entry }} </span><span ng-show="response.exist" class="badge badge-royal" style="font-size: 80%">taken</span>
+  </div>
+</div>
+<div class="padding">
+<button ng-click="confirmFinish()" class="button button-outline button-small button-assertive">
+  FINISH MEETING
+</button>
+</div>
+<!-- <div class="padding">
+ <button ng-click="finish()" class="button button-outline button-block button-assertive">
+  Finish
+</button>
+</div> -->
+  </ion-content>
+</ion-view>
