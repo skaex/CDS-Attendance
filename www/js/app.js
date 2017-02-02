@@ -44,7 +44,8 @@ angular.module('starter', ['ionic', 'ngCordova', 'starter.controllers', 'starter
   // Each tab has its own nav history stack:
 
   .state('tab.new', {
-    url: '/new',
+    cache: false,
+    url: '/new/:id',
     views: {
       'tab-new': {
         templateUrl: 'templates/tab-new.html',
@@ -53,7 +54,41 @@ angular.module('starter', ['ionic', 'ngCordova', 'starter.controllers', 'starter
     }
   })
 
+  .state('tab.report', {
+    cache: false,
+    url: '/report/:id',
+    views: {
+      'tab-reports': {
+        templateUrl: 'templates/report-grp.html',
+        controller: 'GroupReportCtrl'
+      }
+    }
+  })
+
+  .state('tab.grpsreports', {
+    cache: false,
+    url: '/grpsreports',
+    views: {
+      'tab-reports': {
+        templateUrl: 'templates/report-cdsgroups.html',
+        controller: 'ReportCdsGrpsCtrl'
+      }
+    }
+  })
+
+  .state('tab.newgrp', {
+    cache: false,
+    url: '/newgrp',
+    views: {
+      'tab-new': {
+        templateUrl: 'templates/new-cdsgroup.html',
+        controller: 'NewCdsCtrl'
+      }
+    }
+  })
+
   .state('tab.attendance', {
+      cache: false,
       url: '/attendance',
       views: {
         'tab-new': {
@@ -63,6 +98,7 @@ angular.module('starter', ['ionic', 'ngCordova', 'starter.controllers', 'starter
       }
     })
     .state('chat-detail', {
+      cache: false,
       url: '/chats/:chatId',
       views: {
         'tab-chats': {
@@ -73,6 +109,7 @@ angular.module('starter', ['ionic', 'ngCordova', 'starter.controllers', 'starter
     })
 
   .state('tab.account', {
+    cache: false,
     url: '/account',
     views: {
       'tab-account': {
@@ -83,7 +120,7 @@ angular.module('starter', ['ionic', 'ngCordova', 'starter.controllers', 'starter
   });
 
   // if none of the above states are matched, use this as the fallback
-    $urlRouterProvider.otherwise('/tab/new');
+    $urlRouterProvider.otherwise('/tab/newgrp');
 
   
 });

@@ -1,18 +1,52 @@
 angular.module('starter.services', [])
 .factory('meetingFactory', function($cordovaFile, $window) {
   var meetingFac = {};
-  meetingFac.startNew = function(data) {
-    // return slug.
-    var slug = data.cdsGroup + '-' + 'GROUP' + '-' + data.meetingDate;
+  meetingFac.startNew = function(grp, date) {
     // store in local storage.
     $window.localStorage['cdsAttendance'] = JSON.stringify({
-      meeting: data,
+      meetingGroup: grp,
+      meetingDate: date,
       attendances: []
     });
 
-    return slug;
   };
   return meetingFac;
+})
+.factory('cdsFactory', function($ionicPlatform) {
+  var cdsfac = {};
+  // The function below won't work due to some javascript nonsense.
+  cdsfac.getGroups = function(){
+    $ionicPlatform.ready(function() {
+      var db = window.sqlitePlugin.openDatabase({name: 'cds.db', location: 'default'});
+      var objs = [];
+      db.executeSql('SELECT * FROM cdsgroups', [], function(rs) {
+        for (var i = 0; i < rs.rows.length; i++) {
+          objs.push(rs.rows.item(i));
+        }
+        return objs;   
+      }, function(error) {
+        alert("Error: " + error.message);
+        console.log('SELECT SQL statement ERROR: ' + error.message);
+        return [];
+      });
+    });
+  }
+  cdsfac.createGroup = function(data) {
+    $ionicPlatform.ready(function() {
+      var db = window.sqlitePlugin.openDatabase({name: 'cds.db', location: 'default'});
+      db.transaction(function(tx) {
+        //tx.executeSql('DROP TABLE cdsgroups');
+        tx.executeSql('CREATE TABLE IF NOT EXISTS cdsgroups(ID INTEGER PRIMARY KEY AUTOINCREMENT, NAME TEXT NOT NULL UNIQUE)');
+        tx.executeSql('INSERT INTO cdsgroups (NAME) VALUES (?)', [data]);
+      }, function(error) {
+        console.log('Transaction ERROR: ' + error.message);
+        alert('ERROR: ' + error.message);
+      }, function() {
+        console.log('Populated database OK');
+      });
+    });
+  }
+  return cdsfac;
 })
 .factory('attendanceFactory', function($window, $ionicPlatform, $cordovaFile) {
   var attendanceFac = {};
@@ -33,8 +67,30 @@ angular.module('starter.services', [])
   attendanceFac.finish = function() {
     var attends = JSON.parse($window.localStorage['cdsAttendance']);
     var arr = attends.attendances;
-    var datea = new Date(attends.meeting.meetingDate);
-    datea = datea.getDate() + '-' + (datea.getMonth() + 1) + '-' + datea.getFullYear();
+    var datea = attends.meetingDate;
+    var grp = parseInt(attends.meetingGroup, 10);
+    $ionicPlatform.ready(function() {
+      var db = window.sqlitePlugin.openDatabase({name: 'cds.db', location: 'default'});
+      db.transaction(function(tx) {
+        //tx.executeSql('DROP TABLE cdsgroups');
+        tx.executeSql('CREATE TABLE IF NOT EXISTS cdsattendances(ID INTEGER PRIMARY KEY AUTOINCREMENT, CDSGROUP INTEGER NOT NULL, CORPER TEXT, DATE TEXT)');
+        for (var i = 0; i < arr.length; i++) {
+          tx.executeSql('INSERT INTO cdsattendances (CDSGROUP, CORPER, DATE) VALUES (?, ?, ?)', [grp, arr[i], datea]);
+        }
+      }, function(error) {
+        alert('Error: ' + error.message);
+        console.log('Transaction ERROR: ' + error.message);
+        alert('ERROR: ' + error.message);
+      }, function() {
+        $window.localStorage.clear();
+        
+        console.log('Populated database OK');
+      });
+    });
+    // var datea = new Date(attends.meetingDate);
+    //datea = datea.getDate() + '-' + (datea.getMonth() + 1) + '-' + datea.getFullYear();
+
+    /*
     var filename = 'CDS-ATTENDANCE-' + attends.meeting.cdsGroup + '-' + datea;
     //console.log(datea);
     var str = 'Attendance for ' + attends.meeting.cdsGroup + ' ' + datea + '\r\n';
@@ -56,7 +112,7 @@ angular.module('starter.services', [])
       }, function (error) {
         alert('There was an error in making csv!');
       });
-    });
+    });*/
   }
   return attendanceFac;
 });

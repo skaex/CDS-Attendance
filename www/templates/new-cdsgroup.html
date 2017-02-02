@@ -1,0 +1,25 @@
+<ion-view view-title="CDS Groups">
+<ion-nav-buttons side="right">
+  <button class="button button-icon icon ion-alert-circled" ng-click="confirmReset()">
+    Reset
+  </button>
+</ion-nav-buttons>
+  <ion-content>
+   <ion-refresher
+    pulling-text="Pull to refresh..."
+    on-refresh="refresh()">
+  </ion-refresher>
+    <div class="padding">
+      <button class="button button-outline button-block button-balanced" ng-click="newGroup()">
+    New CDS Group
+      </button>
+    </div>
+
+  <div class="list card" ng-repeat="group in groups">
+  <a href="#/tab/new/{{group.ID}}"  class="item item-icon-left">
+    <i class="icon ion-person-stalker"></i>
+    {{ group.NAME }} CDS
+  </a>
+  </div>
+  </ion-content>
+</ion-view>
