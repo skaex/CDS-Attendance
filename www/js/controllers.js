@@ -1,8 +1,18 @@
 angular.module('starter.controllers', [])
 
-.controller('NewCtrl', function($scope, $state, $window, $stateParams, $ionicHistory, $ionicModal, meetingFactory) {
+.controller('NewCtrl', function($scope, $state, $window, $rootScope, $stateParams, $ionicHistory, $ionicModal, meetingFactory) {
  // Form data for the login modal
   $scope.newMeetingData = {};
+  $scope.showPrevious = JSON.parse($window.localStorage['cdsAttendance'] || false);
+
+  $rootScope.$on('attendance:started', function (event) {
+    $scope.showPrevious = true;
+  });
+
+  $rootScope.$on('attendance:finished', function (event) {
+    $scope.showPrevious = false;
+  });
+  
   $scope.grp = $stateParams.id;
   // Create the login modal that we will use later
   $ionicModal.fromTemplateUrl('templates/new-meeting.html', {
@@ -35,16 +45,15 @@ angular.module('starter.controllers', [])
 
     $scope.newMeetingData = {}
     $scope.modal.hide();
-    $state.go('tab.attendance');
+    $scope.showPrevious = true;
+    //$state.go('tab.attendance');
     // Simulate a login delay. Remove this and replace with your login
     // code if using a login system
     // $timeout(function() {
     //   $scope.closeLogin();
     // }, 1000);
   };
-  $scope.goToAttendance = function() {
-    $state.go('tab.attendance');
-  };
+  
 
   //parseInt($stateParams.id,10);
   //var attendance = JSON.parse($window.localStorage['cdsAttendance'] || false);
@@ -70,7 +79,7 @@ angular.module('starter.controllers', [])
 
 })
 
-.controller('AttendanceCtrl', function($scope, $ionicPlatform, $state, $window, $ionicHistory, $stateParams, $cordovaBarcodeScanner,  attendanceFactory, $ionicPopup) {
+.controller('AttendanceCtrl', function($scope, $ionicPlatform, $state, $window, $ionicHistory, $rootScope, $stateParams, $cordovaBarcodeScanner,  attendanceFactory, $ionicPopup) {
   $scope.attendance = JSON.parse($window.localStorage['cdsAttendance'] || false);
   if ($scope.attendance == false) {
     $ionicHistory.clearHistory();
@@ -90,7 +99,10 @@ angular.module('starter.controllers', [])
    confirmPopup.then(function(res) {
      if(res) {
        attendanceFactory.finish();
-       $ionicHistory.clearHistory();
+       //$rootScope.$emit('attendance:finished');
+       $ionicHistory.nextViewOptions({
+          disableBack: true
+       });
        $state.go('tab.newgrp');
        // console.log('Exporta!');
      } else {
@@ -114,8 +126,12 @@ angular.module('starter.controllers', [])
   }
 })
 
-.controller('NewCdsCtrl', function($scope, $window, $state, $ionicModal, $ionicPlatform, $ionicPopup, cdsFactory) {
+.controller('NewCdsCtrl', function($scope, $window, $state, $ionicHistory, $ionicModal, $ionicPlatform, $ionicPopup, cdsFactory) {
+  $ionicHistory.clearHistory();
+  $ionicHistory.clearCache();
+
   $scope.newGroupData = {};
+  
   $scope.confirmReset = function() {
    var confirmPopup = $ionicPopup.confirm({
      title: 'RESET APP?',
@@ -214,6 +230,7 @@ getGrps();
           cor.name = rs.rows.item(i).CORPER;
           cor.times = rs.rows.item(i).ATTENDANCE_COUNT;
           $scope.reports.push(cor);
+          cor = {};
         } 
       }, function(error) {
         alert("Error: " + error.message);

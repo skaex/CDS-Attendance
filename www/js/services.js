@@ -1,4 +1,28 @@
 angular.module('starter.services', [])
+.factory('generalFactory', function($ionicPlatform, $window) {
+  var generalFac = {};
+
+  generalFac.reset = function() {
+    $ionicPlatform.ready(function() {
+      var db = window.sqlitePlugin.openDatabase({name: 'cds.db', location: 'default'});
+      db.transaction(function(tx) {
+        tx.executeSql('DROP TABLE cdsgroups');
+        tx.executeSql('DROP TABLE cdsattendances');
+        tx.executeSql('CREATE TABLE IF NOT EXISTS cdsgroups(ID INTEGER PRIMARY KEY AUTOINCREMENT, NAME TEXT NOT NULL UNIQUE)');
+        tx.executeSql('CREATE TABLE IF NOT EXISTS cdsattendances(ID INTEGER PRIMARY KEY AUTOINCREMENT, CDSGROUP INTEGER NOT NULL, CORPER TEXT, DATE TEXT)');
+      }, function(error) {
+        alert('Error: ' + error.message);
+        console.log('Transaction ERROR: ' + error.message);
+      }, function() {
+        $window.localStorage.clear();
+        console.log('Reset!');
+        alert("Reset Successful!");
+      });
+    });
+  };
+
+  return generalFac;
+})
 .factory('meetingFactory', function($cordovaFile, $window) {
   var meetingFac = {};
   meetingFac.startNew = function(grp, date) {
