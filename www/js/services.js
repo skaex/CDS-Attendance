@@ -1,4 +1,19 @@
 angular.module('starter.services', [])
+.factory('storageFactory', function($window){
+  var storagef = {};
+
+  storagef.getStoredAttendance = function() {
+    return JSON.parse($window.localStorage['cdsAttendance'] || false);
+  };
+
+  storagef.storeAttendance = function(data) {
+    $window.localStorage['cdsAttendance'] = JSON.stringify(data);
+  }
+
+
+
+  return storagef;
+})
 .factory('generalFactory', function($ionicPlatform, $window) {
   var generalFac = {};
 
@@ -72,7 +87,7 @@ angular.module('starter.services', [])
   }
   return cdsfac;
 })
-.factory('attendanceFactory', function($window, $ionicPlatform, $cordovaFile) {
+.factory('attendanceFactory', function($window, $ionicPlatform, $cordovaFile, $rootScope) {
   var attendanceFac = {};
   attendanceFac.recordAttendance = function(data) {
     var result = {
@@ -107,36 +122,11 @@ angular.module('starter.services', [])
         alert('ERROR: ' + error.message);
       }, function() {
         $window.localStorage.clear();
-        
+        $rootScope.$emit('attendance:finished');
         console.log('Populated database OK');
       });
     });
-    // var datea = new Date(attends.meetingDate);
-    //datea = datea.getDate() + '-' + (datea.getMonth() + 1) + '-' + datea.getFullYear();
 
-    /*
-    var filename = 'CDS-ATTENDANCE-' + attends.meeting.cdsGroup + '-' + datea;
-    //console.log(datea);
-    var str = 'Attendance for ' + attends.meeting.cdsGroup + ' ' + datea + '\r\n';
-
-    for (var i = 0; i < arr.length; i++) {
-        str += arr[i] + '\r\n';
-    }
-    //console.log(str);
-    $ionicPlatform.ready(function() {
-      $cordovaFile.writeFile(cordova.file.externalDataDirectory, filename + '.csv', str , true)
-      .then(function (success) {
-        $cordovaFile.writeFile(cordova.file.externalDataDirectory, filename + '.txt', str , true)
-      .then(function (success) {
-        $window.localStorage.clear();
-        alert('It is done!');
-      }, function (error) {
-        alert('There was an error in making txt!');
-      });
-      }, function (error) {
-        alert('There was an error in making csv!');
-      });
-    });*/
   }
   return attendanceFac;
 });

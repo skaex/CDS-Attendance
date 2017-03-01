@@ -1,9 +1,9 @@
 angular.module('starter.controllers', [])
 
-.controller('NewCtrl', function($scope, $state, $window, $rootScope, $stateParams, $ionicHistory, $ionicModal, meetingFactory) {
+.controller('NewCtrl', function($scope, $rootScope, $stateParams, $ionicModal, meetingFactory, storageFactory) {
  // Form data for the login modal
   $scope.newMeetingData = {};
-  $scope.showPrevious = JSON.parse($window.localStorage['cdsAttendance'] || false);
+  $scope.showPrevious = storageFactory.getStoredAttendance();
 
   $rootScope.$on('attendance:started', function (event) {
     $scope.showPrevious = true;
@@ -34,9 +34,7 @@ angular.module('starter.controllers', [])
 
   // Perform the login action when the user submits the login form
   $scope.startNewMeeting = function() {
-    //$scope.slug = meetingFactory.startNew($scope.grp, $scope.newMeetingData.meetingDate);
-    //console.log('Starting new meeting', $scope.newMeetingData);
-    $window.localStorage['cdsAttendance'] = JSON.stringify({
+    storageFactory.storeAttendance({
       meetingGroup: $scope.grp,
       meetingDate: $scope.newMeetingData.meetingDate,
       attendances: []
@@ -46,50 +44,21 @@ angular.module('starter.controllers', [])
     $scope.newMeetingData = {}
     $scope.modal.hide();
     $scope.showPrevious = true;
-    //$state.go('tab.attendance');
-    // Simulate a login delay. Remove this and replace with your login
-    // code if using a login system
-    // $timeout(function() {
-    //   $scope.closeLogin();
-    // }, 1000);
   };
   
 
-  //parseInt($stateParams.id,10);
-  //var attendance = JSON.parse($window.localStorage['cdsAttendance'] || false);
-  var groupobj = {};
-  // $ionicPlatform.ready(function() {
-  //     var db = window.sqlitePlugin.openDatabase({name: 'cds.db', location: 'default'});
-  //     db.executeSql('SELECT * FROM cdsgroups WHERE ID = ?', [ parseInt($stateParams.id,10) ], function(rs) {
-  //       groupobj = rs.rows.item(0)
-  //     }, function(error) {
-  //       alert("Error: " + error.message);
-  //       console.log('SELECT SQL statement ERROR: ' + error.message);
-  //     });
-  //   });
-  // if(!attendance) {
-  //   attendance = JSON.stringify({
-  //     meeting: {},
-  //     attendances: []
-  //   });
-  // } else {
-  //   // Decide if to clear the attendances.
-  //   attendance.meeting.cdsGroup = groupobj;
-  // }
-
 })
 
-.controller('AttendanceCtrl', function($scope, $ionicPlatform, $state, $window, $ionicHistory, $rootScope, $stateParams, $cordovaBarcodeScanner,  attendanceFactory, $ionicPopup) {
-  $scope.attendance = JSON.parse($window.localStorage['cdsAttendance'] || false);
+.controller('AttendanceCtrl', function($scope, $ionicPlatform, $state, $window, $ionicHistory, $rootScope, $stateParams, $cordovaBarcodeScanner,  attendanceFactory, $ionicPopup, storageFactory) {
+  $scope.attendance = storageFactory.getStoredAttendance();
   if ($scope.attendance == false) {
     $ionicHistory.clearHistory();
     $state.go('tab.new');
-  }
-
-  if ($scope.attendance) {
+  } else {
     $scope.counta = $scope.attendance.attendances.length;
   }
   $scope.response = {};
+  
   $scope.confirmFinish = function() {
    var confirmPopup = $ionicPopup.confirm({
      title: 'Finish meeting',
@@ -99,7 +68,6 @@ angular.module('starter.controllers', [])
    confirmPopup.then(function(res) {
      if(res) {
        attendanceFactory.finish();
-       //$rootScope.$emit('attendance:finished');
        $ionicHistory.nextViewOptions({
           disableBack: true
        });
@@ -115,8 +83,10 @@ angular.module('starter.controllers', [])
       $cordovaBarcodeScanner
       .scan()
       .then(function(barcodeData) {
-        $scope.response = attendanceFactory.recordAttendance(barcodeData.text);
-        $scope.attendance = JSON.parse($window.localStorage['cdsAttendance'] || false);
+        if (barcodeData.text !== '') {
+          $scope.response = attendanceFactory.recordAttendance(barcodeData.text);
+        }
+        $scope.attendance = storageFactory.getStoredAttendance();
         $scope.counta = $scope.attendance.attendances.length;
       }, function(error) {
         alert("There was an\n" +
