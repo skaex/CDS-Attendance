@@ -5,9 +5,20 @@ navigation history that also transitions its views in and out.
 -->
 <ion-tabs class="tabs-striped tabs-top tabs-icon-top tabs-color-active-balanced">
 
-  <!-- Dashboard Tab -->
-  <ion-tab title="CDS Meetings" icon-off="ion-person-stalker" icon-on="ion-person-stalker" href="#/tab/new">
+  
+  <!-- CDS Groups Tab -->
+  <ion-tab title="CDS Groups" icon-off="ion-person-stalker" icon-on="ion-person-stalker" href="#/tab/newgrp">
     <ion-nav-view name="tab-new"></ion-nav-view>
+  </ion-tab>
+
+  <!-- CDS Meeting Tab -->
+  <ion-tab title="CDS Meetings" icon-off="ion-clipboard" icon-on="ion-clipboard" href="#/tab/meetgrp">
+    <ion-nav-view name="tab-meeting"></ion-nav-view>
+  </ion-tab>
+
+  <!-- CDS Reports Tab -->
+  <ion-tab title="CDS Reports" icon-off="ion-stats-bars" icon-on="ion-stats-bars" href="#/tab/grpsreports">
+    <ion-nav-view name="tab-reports"></ion-nav-view>
   </ion-tab>
 
 

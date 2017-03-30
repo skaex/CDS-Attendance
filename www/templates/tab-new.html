@@ -1,17 +1,26 @@
-<ion-modal-view>
-<ion-view view-title="New Meeting">
+<ion-view view-title="CDS Meetings">
   <ion-content>
     <div class="padding">
       <button class="button button-outline button-block button-balanced" ng-click="newMeeting()">
     New CDS Meeting
       </button>
     </div>
-  <div class="list card">
-  <a href="#/tab/attendance"  class="item item-icon-left">
-    <i class="icon ion-person-stalker"></i>
-    Current CDS Meeting <span class="badge badge-royal">if any</span>
+
+<div class="list card" ng-if="showExists">
+  <span style="color: red; font-size: 80%"  class="item item-icon-left">
+    <i style="font-size: 100%" class="icon ion-alert"></i>
+    The meeting you tried to add already exist.
+  </span>
+  </div>
+
+
+    
+  <div class="list card" ng-if="showPrevious">
+  <a href="#/tab/attendance" class="item item-icon-left">
+    <i class="icon ion-clipboard"></i>
+    Current CDS Meeting <!-- <span class="badge badge-royal">if any</span> -->
   </a>
   </div>
   </ion-content>
 </ion-view>
-</ion-modal-view>
+

@@ -1,0 +1,35 @@
+<ion-view view-title="CDS Groups">
+<ion-nav-buttons side="right">
+  <button class="button button-icon icon ion-alert-circled" ng-click="confirmReset()">
+    Reset
+  </button>
+</ion-nav-buttons>
+  <ion-content>
+   <ion-refresher
+    pulling-text="Pull to refresh..."
+    on-refresh="refresh()">
+  </ion-refresher>
+
+  <div class="list card" ng-if="grpexists">
+  <span style="color: red; font-size: 80%"  class="item item-icon-left">
+    <i style="font-size: 100%" class="icon ion-alert"></i>
+    The group you tried to add already exist.
+  </span>
+  </div>
+
+    <div class="padding">
+      <button class="button button-outline button-block button-royal" ng-click="newGroup()">
+    New CDS Group
+      </button>
+    </div>
+   
+
+  <div class="list card mycards" ng-repeat="group in groups">
+  <a href="#/tab/newmembers/{{group.id}}"  class="item item-icon-left">
+    <i class="icon ion-ios-people"></i>
+    {{ group.cds }} CDS Group Membership
+    
+  </a>
+  </div>
+  </ion-content>
+</ion-view>

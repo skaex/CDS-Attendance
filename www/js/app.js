@@ -44,46 +44,85 @@ angular.module('starter', ['ionic', 'ngCordova', 'starter.controllers', 'starter
   // Each tab has its own nav history stack:
 
   .state('tab.new', {
-    url: '/new',
+    cache: false,
+    url: '/new/:id',
     views: {
-      'tab-new': {
+      'tab-meeting': {
         templateUrl: 'templates/tab-new.html',
         controller: 'NewCtrl'
       }
     }
   })
 
+  .state('tab.newmembers', {
+    cache: false,
+    url: '/newmembers/:id',
+    views: {
+      'tab-new': {
+        templateUrl: 'templates/tab-newmembers.html',
+        controller: 'NewMembersCtrl'
+      }
+    }
+  })
+
+
+  .state('tab.report', {
+    cache: false,
+    url: '/report/:id',
+    views: {
+      'tab-reports': {
+        templateUrl: 'templates/report-grp.html',
+        controller: 'GroupReportCtrl'
+      }
+    }
+  })
+
+  .state('tab.grpsreports', {
+    cache: false,
+    url: '/grpsreports',
+    views: {
+      'tab-reports': {
+        templateUrl: 'templates/report-cdsgroups.html',
+        controller: 'ReportCdsGrpsCtrl'
+      }
+    }
+  })
+
+  .state('tab.newgrp', {
+    cache: false,
+    url: '/newgrp',
+    views: {
+      'tab-new': {
+        templateUrl: 'templates/new-cdsgroup.html',
+        controller: 'NewCdsCtrl'
+      }
+    }
+  })
+
+  .state('tab.meetgrp', {
+    cache: false,
+    url: '/meetgrp',
+    views: {
+      'tab-meeting': {
+        templateUrl: 'templates/meeting-cdsgroups.html',
+        controller: 'MeetingCdsCtrl'
+      }
+    }
+  })
+
   .state('tab.attendance', {
+      cache: false,
       url: '/attendance',
       views: {
-        'tab-new': {
+        'tab-meeting': {
           templateUrl: 'templates/tab-attendance.html',
           controller: 'AttendanceCtrl'
         }
       }
-    })
-    .state('chat-detail', {
-      url: '/chats/:chatId',
-      views: {
-        'tab-chats': {
-          templateUrl: 'templates/chat-detail.html',
-          controller: 'ChatDetailCtrl'
-        }
-      }
-    })
-
-  .state('tab.account', {
-    url: '/account',
-    views: {
-      'tab-account': {
-        templateUrl: 'templates/tab-account.html',
-        controller: 'AccountCtrl'
-      }
-    }
-  });
+    });
 
   // if none of the above states are matched, use this as the fallback
-    $urlRouterProvider.otherwise('/tab/new');
+    $urlRouterProvider.otherwise('/tab/newgrp');
 
   
 });

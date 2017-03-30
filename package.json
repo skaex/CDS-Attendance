@@ -1,7 +1,7 @@
 {
   "name": "cds-attendance",
   "version": "1.1.1",
-  "description": "cds-attendance: An Ionic project",
+  "description": "cds-attendance: An NYSC IT CDS Project intending to replace paper-driven attendance with robust mobile apps that should work even in remote locations",
   "dependencies": {
     "gulp": "^3.5.6",
     "gulp-sass": "^2.0.4",

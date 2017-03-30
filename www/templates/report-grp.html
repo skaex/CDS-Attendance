@@ -1,0 +1,24 @@
+<ion-view view-title="Report">
+<ion-nav-buttons side="right">
+  <button class="button button-icon icon ion-ios-download" ng-click="export(reports)">
+    Export
+  </button>
+</ion-nav-buttons>
+  <ion-content>
+  <div class="list">
+	  <label class="item item-input">
+	    <i class="icon ion-search placeholder-icon"></i>
+	    <input ng-model="query" type="text" placeholder="Search">
+	  </label>
+	</div>
+  <div class="card" ng-repeat="report in reports | filter: query">
+  <div style="font-size: 70%" class="item item-text-wrap">
+    {{ report.name }}<br>
+    {{ report.times }} count(s)<br>
+    <span ng-repeat="dat in report.adates">
+    <{{ dat | date:'MM/dd/yyyy' }}>  
+    </span>
+  </div>
+</div>
+  </ion-content>
+</ion-view>

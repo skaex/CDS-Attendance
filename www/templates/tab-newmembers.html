@@ -1,0 +1,17 @@
+<ion-view view-title="CDS Members">
+  <ion-content>
+    <div class="padding">
+      <button class="button icon-right ion-ios-personadd button-outline button-block button-balanced" ng-click="newMember()">
+    New CDS Member
+      </button>
+    </div>
+  <div class="list card" ng-if="show">
+  <span href="#" class="item">
+    
+    <span style="font-size: 50%">{{ member }}</span> 
+    <span style="font-size: 60%" class="badge badge-assertive" ng-if="exist">Existing Member</span>
+    <span style="font-size: 60%" class="badge badge-balanced" ng-if="new">New Member</span>
+  </span>
+  </div>
+  </ion-content>
+</ion-view>

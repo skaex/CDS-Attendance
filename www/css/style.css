@@ -1,4 +1,10 @@
 /* Empty. Add your own CSS if you like */
+
+
 .button {
 	border-radius: 0;
+}
+
+.mycards {
+	border-radius: 0 !important;
 }
