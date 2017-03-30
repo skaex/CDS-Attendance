@@ -10,33 +10,36 @@ angular.module('starter.services', [])
     $window.localStorage['cdsAttendance'] = JSON.stringify(data);
   }
 
-
-
   return storagef;
 })
-.factory('generalFactory', function($ionicPlatform, $window) {
-  var generalFac = {};
-
-  generalFac.reset = function() {
-    $ionicPlatform.ready(function() {
-      var db = window.sqlitePlugin.openDatabase({name: 'cds.db', location: 'default'});
-      db.transaction(function(tx) {
-        tx.executeSql('DROP TABLE cdsgroups');
-        tx.executeSql('DROP TABLE cdsattendances');
-        tx.executeSql('CREATE TABLE IF NOT EXISTS cdsgroups(ID INTEGER PRIMARY KEY AUTOINCREMENT, NAME TEXT NOT NULL UNIQUE)');
-        tx.executeSql('CREATE TABLE IF NOT EXISTS cdsattendances(ID INTEGER PRIMARY KEY AUTOINCREMENT, CDSGROUP INTEGER NOT NULL, CORPER TEXT, DATE TEXT)');
-      }, function(error) {
-        alert('Error: ' + error.message);
-        console.log('Transaction ERROR: ' + error.message);
-      }, function() {
-        $window.localStorage.clear();
-        console.log('Reset!');
-        alert("Reset Successful!");
-      });
-    });
+.factory('databaseFactory', function($window){
+  var dbKey = 'DatabaseData';
+  var appKey = 'AppData';
+  return {
+    storeData: function(value) {
+      $window.localStorage[dbKey] = JSON.stringify(value);
+    },
+    getData: function() {
+      return JSON.parse($window.localStorage[dbKey] || '{}');
+    },
+    storeState: function(value) {
+      $window.localStorage[appKey] = JSON.stringify(value);
+    },
+    getState: function() {
+      return JSON.parse($window.localStorage[appKey] || '{}');
+    },
+    clearState: function() {
+      $window.localStorage[appKey] = null;
+    }
   };
-
-  return generalFac;
+})
+.factory('generalFactory', function($window) {
+  return {
+    reset: function() {
+      $window.localStorage.clear();
+      console.log('Reset!');
+    }
+  };
 })
 .factory('meetingFactory', function($cordovaFile, $window) {
   var meetingFac = {};
@@ -51,82 +54,167 @@ angular.module('starter.services', [])
   };
   return meetingFac;
 })
-.factory('cdsFactory', function($ionicPlatform) {
-  var cdsfac = {};
-  // The function below won't work due to some javascript nonsense.
-  cdsfac.getGroups = function(){
-    $ionicPlatform.ready(function() {
-      var db = window.sqlitePlugin.openDatabase({name: 'cds.db', location: 'default'});
-      var objs = [];
-      db.executeSql('SELECT * FROM cdsgroups', [], function(rs) {
-        for (var i = 0; i < rs.rows.length; i++) {
-          objs.push(rs.rows.item(i));
+.factory('cdsFactory', function($rootScope) {
+  return {
+    storeMeeting: function(databaseObj, data, groupId) {
+      for (var i = 0; i < databaseObj.cdsgroups.length; i++) {
+        if (databaseObj.cdsgroups[i].id === groupId) {
+          for (var j = 0; j < databaseObj.cdsgroups[i].meetings.length; j++) {
+            if (databaseObj.cdsgroups[i].meetings[j] === data.toISOString()){
+              $rootScope.$emit('attendance:exists');
+              return databaseObj
+            }
+          }
+          databaseObj.cdsgroups[i].meetings.push(data);
+          $rootScope.$emit('attendance:added');
+          break;
         }
-        return objs;   
-      }, function(error) {
-        alert("Error: " + error.message);
-        console.log('SELECT SQL statement ERROR: ' + error.message);
-        return [];
-      });
-    });
+      }
+      return databaseObj;
+    },
+    startMeeting: function(stateObj, data, groupId) {
+      $rootScope.$emit('attendance:started');
+      return {
+        groupId: groupId,
+        meetingDate: data
+      };
+    }
+  };
+})
+.factory('cdsGroupFactory', function($ionicPlatform, $rootScope) {
+  var cdsfac = {};
+  
+  cdsfac.getGroups = function(databaseObj){
+    return databaseObj.cdsgroups || [];
   }
-  cdsfac.createGroup = function(data) {
-    $ionicPlatform.ready(function() {
-      var db = window.sqlitePlugin.openDatabase({name: 'cds.db', location: 'default'});
-      db.transaction(function(tx) {
-        //tx.executeSql('DROP TABLE cdsgroups');
-        tx.executeSql('CREATE TABLE IF NOT EXISTS cdsgroups(ID INTEGER PRIMARY KEY AUTOINCREMENT, NAME TEXT NOT NULL UNIQUE)');
-        tx.executeSql('INSERT INTO cdsgroups (NAME) VALUES (?)', [data]);
-      }, function(error) {
-        console.log('Transaction ERROR: ' + error.message);
-        alert('ERROR: ' + error.message);
-      }, function() {
-        console.log('Populated database OK');
-      });
-    });
+  cdsfac.getGroup = function(databaseObj, groupId) {
+    for (var i = 0; i < databaseObj.cdsgroups.length; i++) {
+      if (databaseObj.cdsgroups[i].id === groupId) {
+        return databaseObj.cdsgroups[i].cds;
+      }
+    }
+    return null;
+  }
+  cdsfac.createGroup = function(databaseObj, data) {
+    var cdsObj = {
+      cds: data,
+      members: [],
+      meetings: [],
+    };
+    if (databaseObj.cdsgroups) {
+      for (var i = 0; i < databaseObj.cdsgroups.length; i++) {
+        if (databaseObj.cdsgroups[i].cds === data) {
+          $rootScope.$emit('group:exists');
+          return databaseObj;
+        }
+      }
+      cdsObj.id = databaseObj.cdsgroups.length + 1;
+      databaseObj.cdsgroups.push(cdsObj);
+      
+    } else {
+      cdsObj.id = 1;
+      databaseObj.cdsgroups = [cdsObj,];
+    }
+    return databaseObj;
   }
   return cdsfac;
 })
+.factory('memberFactory', function() {
+  return {
+    storeMember: function(databaseObj, data, groupId) {
+      for (var i = 0; i < databaseObj.cdsgroups.length; i++) {
+        if (databaseObj.cdsgroups[i].id === groupId) {
+          databaseObj.cdsgroups[i].members.push({
+            details: data,
+            attendances:[]
+          });
+          break;
+        }
+      }
+      return databaseObj;
+    },
+    doesExist: function(databaseObj, data, groupId){
+      for (var i = 0; i < databaseObj.cdsgroups.length; i++) {
+        if (databaseObj.cdsgroups[i].id === groupId) {
+          for (var j = 0; j < databaseObj.cdsgroups[i].members.length; j++)
+          {
+            if (databaseObj.cdsgroups[i].members[j].details === data) {
+              return true;
+            }
+          }
+          return false;
+        }
+      }
+    }
+  };
+})
+.factory('scannerFactory', function(){
+  return {
+    captureDetails: function() {
+      return 'FC/16A/5973-HAMZA-ABDULMAJID-SADIQ';
+    }
+  };
+  // $ionicPlatform.ready(function() {
+  //     $cordovaBarcodeScanner
+  //     .scan()
+  //     .then(function(barcodeData) {
+  //       if (barcodeData.text !== '') {
+  //         $scope.response = attendanceFactory.recordAttendance(barcodeData.text);
+  //       }
+  //       $scope.attendance = storageFactory.getStoredAttendance();
+  //       $scope.counta = $scope.attendance.attendances.length;
+  //     }, function(error) {
+  //       alert("There was an\n" +
+  //                 "Error: " + error.text + "\n");
+  //     });
+  //   });
+})
+.factory('reportsFactory', function() {
+  return {
+    getReports: function(databaseObj, groupId) {
+      var res = [];
+      for (var i = 0; i < databaseObj.cdsgroups.length; i++) {
+      
+        if (databaseObj.cdsgroups[i].id === groupId) {
+          for (var j = 0; j < databaseObj.cdsgroups[i].members.length; j++) {
+            var member = databaseObj.cdsgroups[i].members[j];
+            
+            res.push({
+              name: member.details,
+              times: member.attendances.length,
+              adates: member.attendances
+            })
+          }
+          break;
+          return res;
+        }
+      }
+      return res;
+    }
+  }
+})
 .factory('attendanceFactory', function($window, $ionicPlatform, $cordovaFile, $rootScope) {
   var attendanceFac = {};
-  attendanceFac.recordAttendance = function(data) {
-    var result = {
-      exist: false,
-      entry: data,
-    };
-    var attends = JSON.parse($window.localStorage['cdsAttendance']);
-    if (attends.attendances.indexOf(data) === -1) {
-      attends.attendances.push(data);
-    } else {
-      result.exist = true;
-    }
-    $window.localStorage['cdsAttendance'] = JSON.stringify(attends);
-    return result;
-  }
-  attendanceFac.finish = function() {
-    var attends = JSON.parse($window.localStorage['cdsAttendance']);
-    var arr = attends.attendances;
-    var datea = attends.meetingDate;
-    var grp = parseInt(attends.meetingGroup, 10);
-    $ionicPlatform.ready(function() {
-      var db = window.sqlitePlugin.openDatabase({name: 'cds.db', location: 'default'});
-      db.transaction(function(tx) {
-        //tx.executeSql('DROP TABLE cdsgroups');
-        tx.executeSql('CREATE TABLE IF NOT EXISTS cdsattendances(ID INTEGER PRIMARY KEY AUTOINCREMENT, CDSGROUP INTEGER NOT NULL, CORPER TEXT, DATE TEXT)');
-        for (var i = 0; i < arr.length; i++) {
-          tx.executeSql('INSERT INTO cdsattendances (CDSGROUP, CORPER, DATE) VALUES (?, ?, ?)', [grp, arr[i], datea]);
+  attendanceFac.recordAttendance = function(databaseObj, stateObj, data) {
+    for (var i = 0; i < databaseObj.cdsgroups.length; i++) {
+      if (databaseObj.cdsgroups[i].id === stateObj.groupId) {
+        for (var j = 0; j < databaseObj.cdsgroups[i].members.length; j++) {
+          if (databaseObj.cdsgroups[i].members[j].details === data) {
+            if (databaseObj.cdsgroups[i].members[j].attendances.indexOf(stateObj.meetingDate) === -1) {
+              databaseObj.cdsgroups[i].members[j].attendances.push(stateObj.meetingDate);
+              $rootScope.$emit('memberattendance:taken');
+            } else {
+              $rootScope.$emit('memberattendance:exists');        
+            }
+            return databaseObj;
+          }
         }
-      }, function(error) {
-        alert('Error: ' + error.message);
-        console.log('Transaction ERROR: ' + error.message);
-        alert('ERROR: ' + error.message);
-      }, function() {
-        $window.localStorage.clear();
-        $rootScope.$emit('attendance:finished');
-        console.log('Populated database OK');
-      });
-    });
-
+        $rootScope.$emit('memberattendance:nomember');
+        break;
+      }
+    }
+    return databaseObj;
   }
+
   return attendanceFac;
 });

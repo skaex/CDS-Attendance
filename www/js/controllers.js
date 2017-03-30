@@ -1,9 +1,64 @@
 angular.module('starter.controllers', [])
+.controller('NewMembersCtrl', function($scope, $ionicPlatform, $cordovaBarcodeScanner, $stateParams, scannerFactory, databaseFactory, memberFactory) {
+  $scope.exist = false;
+  $scope.show = false;
+  $scope.member = '';
+  $scope.new = false;
 
-.controller('NewCtrl', function($scope, $rootScope, $stateParams, $ionicModal, meetingFactory, storageFactory) {
+  $scope.newMember = function() {
+    $scope.show = true;
+    $scope.member = '';
+    var group = parseInt($stateParams.id, 10);
+    $ionicPlatform.ready(function() {
+      $cordovaBarcodeScanner
+      .scan()
+      .then(function(barcodeData) {
+        if (barcodeData.text !== '') {
+          $scope.member = barcodeData.text;
+          $scope.exist = memberFactory.doesExist(databaseFactory.getData(), $scope.member, group);
+          $scope.new = !$scope.exist;
+          if ($scope.exist === false) {
+            databaseFactory.storeData(
+              memberFactory.storeMember(
+                databaseFactory.getData(), 
+                $scope.member, 
+                group
+              )
+            );
+          }
+        }
+      }, function(error) {
+        alert("There was an\n" +
+                  "Error: " + error.text + "\n");
+      });
+    });
+    
+    
+  }
+})
+.controller('MeetingCdsCtrl', function($scope, cdsGroupFactory, databaseFactory) {
+  $scope.groups = [];
+  var getGrps = function () {
+    $scope.groups = cdsGroupFactory.getGroups(databaseFactory.getData());
+  }
+  getGrps();
+
+})
+.controller('NewCtrl', function($scope, $rootScope, $stateParams, $ionicModal, databaseFactory, cdsFactory) {
  // Form data for the login modal
   $scope.newMeetingData = {};
-  $scope.showPrevious = storageFactory.getStoredAttendance();
+  $scope.grp = parseInt($stateParams.id, 10);
+
+  var state = databaseFactory.getState();
+  if (state) {
+    if (state.groupId === parseInt($scope.grp)) {
+      $scope.showPrevious = true;
+    } else {
+      $scope.showPrevious = false;
+    }
+  } else {
+    $scope.showPrevious = false;
+  }
 
   $rootScope.$on('attendance:started', function (event) {
     $scope.showPrevious = true;
@@ -13,7 +68,18 @@ angular.module('starter.controllers', [])
     $scope.showPrevious = false;
   });
   
-  $scope.grp = $stateParams.id;
+  $scope.showExists = false;
+
+  $rootScope.$on('attendance:exists', function (event) {
+    $scope.showExists = true;
+    alert('The meeting already exists!');
+  });
+
+  $rootScope.$on('attendance:added', function (event) {
+    $scope.showExists = false;
+    alert('Meeting successfully added!');
+  });
+  
   // Create the login modal that we will use later
   $ionicModal.fromTemplateUrl('templates/new-meeting.html', {
     scope: $scope
@@ -34,29 +100,36 @@ angular.module('starter.controllers', [])
 
   // Perform the login action when the user submits the login form
   $scope.startNewMeeting = function() {
-    storageFactory.storeAttendance({
-      meetingGroup: $scope.grp,
-      meetingDate: $scope.newMeetingData.meetingDate,
-      attendances: []
-    });
-    // Do something interesting here.
+    // Store it in the db
+    databaseFactory.storeData(
+      cdsFactory.storeMeeting(
+        databaseFactory.getData(), 
+        $scope.newMeetingData.meetingDate, 
+        $scope.grp
+      )
+    );
+    // Store the state of the meeting as started
+    if (!$scope.showExists) {
+      databaseFactory.storeState(
+        cdsFactory.startMeeting(
+          databaseFactory.getState(),
+          $scope.newMeetingData.meetingDate,
+          $scope.grp
+        )
+      );
+    }
+
 
     $scope.newMeetingData = {}
     $scope.modal.hide();
-    $scope.showPrevious = true;
   };
   
 
 })
 
-.controller('AttendanceCtrl', function($scope, $ionicPlatform, $state, $window, $ionicHistory, $rootScope, $stateParams, $cordovaBarcodeScanner,  attendanceFactory, $ionicPopup, storageFactory) {
-  $scope.attendance = storageFactory.getStoredAttendance();
-  if ($scope.attendance == false) {
-    $ionicHistory.clearHistory();
-    $state.go('tab.new');
-  } else {
-    $scope.counta = $scope.attendance.attendances.length;
-  }
+.controller('AttendanceCtrl', function($scope, $ionicPlatform, $state, $window, $ionicHistory, $rootScope, $stateParams, $cordovaBarcodeScanner, cdsGroupFactory,  attendanceFactory, $ionicPopup, storageFactory, databaseFactory, scannerFactory) {
+  $scope.meeting = databaseFactory.getState();
+  $scope.group = cdsGroupFactory.getGroup(databaseFactory.getData(), $scope.meeting.groupId);
   $scope.response = {};
   
   $scope.confirmFinish = function() {
@@ -67,36 +140,56 @@ angular.module('starter.controllers', [])
 
    confirmPopup.then(function(res) {
      if(res) {
-       attendanceFactory.finish();
+       databaseFactory.clearState();
        $ionicHistory.nextViewOptions({
           disableBack: true
        });
-       $state.go('tab.newgrp');
+       $state.go('tab.meetgrp');
        // console.log('Exporta!');
      } else {
        console.log('Oops!');
      }
    });
  };
+ $scope.existing = false;
+ $scope.nomember = false;
+ $scope.details = '';
+
+ $rootScope.$on('memberattendance:exists', function (event) {
+    $scope.nomember = false;
+    $scope.existing = true;
+  });
+ $rootScope.$on('memberattendance:nomember', function (event) {
+    $scope.existing = false;
+    $scope.nomember = true;
+  });
   $scope.take = function() {
     $ionicPlatform.ready(function() {
       $cordovaBarcodeScanner
       .scan()
       .then(function(barcodeData) {
         if (barcodeData.text !== '') {
-          $scope.response = attendanceFactory.recordAttendance(barcodeData.text);
+          $scope.details = barcodeData.text;
+
+          databaseFactory.storeData(
+            attendanceFactory.recordAttendance(
+              databaseFactory.getData(),
+              databaseFactory.getState(),
+              $scope.details
+            )
+          );
         }
-        $scope.attendance = storageFactory.getStoredAttendance();
-        $scope.counta = $scope.attendance.attendances.length;
       }, function(error) {
         alert("There was an\n" +
                   "Error: " + error.text + "\n");
       });
     });
+    
+
   }
 })
 
-.controller('NewCdsCtrl', function($scope, $window, $state, $ionicHistory, $ionicModal, $ionicPlatform, $ionicPopup, cdsFactory) {
+.controller('NewCdsCtrl', function($scope, $rootScope, $ionicHistory, $ionicModal, $ionicPlatform, $ionicPopup, cdsGroupFactory, generalFactory, databaseFactory) {
   $ionicHistory.clearHistory();
   $ionicHistory.clearCache();
 
@@ -110,24 +203,9 @@ angular.module('starter.controllers', [])
 
    confirmPopup.then(function(res) {
      if(res) {
-       $ionicPlatform.ready(function() {
-          var db = window.sqlitePlugin.openDatabase({name: 'cds.db', location: 'default'});
-          db.transaction(function(tx) {
-            tx.executeSql('DROP TABLE cdsgroups');
-            tx.executeSql('DROP TABLE cdsattendances');
-            tx.executeSql('CREATE TABLE IF NOT EXISTS cdsgroups(ID INTEGER PRIMARY KEY AUTOINCREMENT, NAME TEXT NOT NULL UNIQUE)');
-            tx.executeSql('CREATE TABLE IF NOT EXISTS cdsattendances(ID INTEGER PRIMARY KEY AUTOINCREMENT, CDSGROUP INTEGER NOT NULL, CORPER TEXT, DATE TEXT)');
-          }, function(error) {
-            alert('Error: ' + error.message);
-            console.log('Transaction ERROR: ' + error.message);
-            alert('ERROR: ' + error.message);
-          }, function() {
-            $window.localStorage.clear();
-            console.log('Reset!');
-            alert("Reset Successful!");
-            $state.go('tab.newgrp');
-          });
-        });
+       generalFactory.reset();
+       alert('Reset successful!');
+       $rootScope.$emit('app:reset');
      } else {
        console.log('Oops!');
      }
@@ -138,25 +216,23 @@ angular.module('starter.controllers', [])
   }).then(function(modal) {
     $scope.modal = modal;
   });
-  $scope.groups = [];
 
+  $rootScope.$on('app:reset', function (event) {
+    $scope.groups = [];
+    $scope.grpexists = false;
+  });
+
+  $scope.groups = [];
+  $scope.grpexists = false
+  $rootScope.$on('group:exists', function (event) {
+    $scope.grpexists = true;
+    alert("The group already exist");
+  });
+  
   var getGrps = function () {
-  $ionicPlatform.ready(function() {
-      $scope.groups = [];
-      var db = window.sqlitePlugin.openDatabase({name: 'cds.db', location: 'default'});
-      db.executeSql('SELECT * FROM cdsgroups ORDER BY ID DESC', [], function(rs) {
-        for (var i = 0; i < rs.rows.length; i++) {
-          $scope.groups.push(rs.rows.item(i));
-        } 
-      }, function(error) {
-        alert("Error: " + error.message);
-        console.log('SELECT SQL statement ERROR: ' + error.message);
-      });
-    });
-}
-getGrps();
-  //$scope.groups = cdsFactory.getGroups();
-  //alert($scope.groups);
+    $scope.groups = cdsGroupFactory.getGroups(databaseFactory.getData());
+  }
+  getGrps();
   $scope.closeNewGroup = function() {
     $scope.newGroupData = {};
     $scope.modal.hide();
@@ -168,51 +244,31 @@ getGrps();
 
   $scope.createNewGroup = function() {
     $scope.newGroupData.cdsGroup = $scope.newGroupData.cdsGroup.toUpperCase();
-    cdsFactory.createGroup($scope.newGroupData.cdsGroup);
+    databaseFactory.storeData(cdsGroupFactory.createGroup(
+      databaseFactory.getData(), 
+      $scope.newGroupData.cdsGroup
+    ));
     $scope.newGroupData = {}
     $scope.modal.hide();
     getGrps();
   };
   $scope.refresh = function () {
     getGrps();
+    $scope.grpexists = false
     $scope.$broadcast('scroll.refreshComplete');
   };
 
 })
-.controller('GroupReportCtrl', function ($scope, $stateParams, $ionicPlatform, $cordovaFile, $window) {
-  $scope.reports = [];
+.controller('GroupReportCtrl', function ($scope, $stateParams, $ionicPlatform, $cordovaFile, $window, databaseFactory, reportsFactory, cdsGroupFactory) {
   $scope.query = "";
-  $ionicPlatform.ready(function() {
-      var db = window.sqlitePlugin.openDatabase({name: 'cds.db', location: 'default'});
-      db.executeSql('SELECT CORPER, count(*) ATTENDANCE_COUNT from cdsattendances where CDSGROUP=? group by CORPER', [$stateParams.id], function(rs) {
-        for (var i = 0; i < rs.rows.length; i++) {
-          var cor = {
-            name: '',
-            times: 0,
-            adates: []
-          };
-          //alert(rs.rows.item(i).CORPER);
-          db.executeSql('SELECT DATE from cdsattendances where CDSGROUP=? and CORPER=?', [$stateParams.id, rs.rows.item(i).CORPER], function(rsi) {
-            for (var j = 0; j < rsi.rows.length; j++) {
-              cor.adates.push(rsi.rows.item(j));
-            }
-          });
-          cor.name = rs.rows.item(i).CORPER;
-          cor.times = rs.rows.item(i).ATTENDANCE_COUNT;
-          $scope.reports.push(cor);
-          cor = {};
-        } 
-      }, function(error) {
-        alert("Error: " + error.message);
-        console.log('SELECT SQL statement ERROR: ' + error.message);
-      });
-    });
+  var cdgroup = cdsGroupFactory.getGroup(databaseFactory.getData(), parseInt($stateParams.id, 10));
+  $scope.reports = reportsFactory.getReports(databaseFactory.getData(), parseInt($stateParams.id, 10));
   $scope.export = function (data) {
-    var str = "";
+    var str = cdgroup + "  CDS Report\r\n";
     for (var k = 0; k < data.length; k++ ) {
       str += data[k].name + ', ' + data[k].times;
       for (var ij = 0; ij < data[k].adates.length; ij++) {
-        str +=  ', ' + data[k].adates[ij].DATE;
+        str +=  ', ' + data[k].adates[ij];
       }
       str += '\r\n';
       
@@ -234,22 +290,11 @@ getGrps();
 
 
 })
-.controller('ReportCdsGrpsCtrl', function($scope, $ionicPlatform) {
+.controller('ReportCdsGrpsCtrl', function($scope, databaseFactory, cdsGroupFactory) {
   $scope.groups = [];
 
   var getGrps = function () {
-    $ionicPlatform.ready(function() {
-      $scope.groups = [];
-      var db = window.sqlitePlugin.openDatabase({name: 'cds.db', location: 'default'});
-      db.executeSql('SELECT * FROM cdsgroups ORDER BY ID DESC', [], function(rs) {
-        for (var i = 0; i < rs.rows.length; i++) {
-          $scope.groups.push(rs.rows.item(i));
-        } 
-      }, function(error) {
-        alert("Error: " + error.message);
-        console.log('SELECT SQL statement ERROR: ' + error.message);
-      });
-    });
+    $scope.groups = cdsGroupFactory.getGroups(databaseFactory.getData());
   };
   getGrps();
   $scope.refresh = function () {

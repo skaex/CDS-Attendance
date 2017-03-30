@@ -4,3 +4,7 @@
 .button {
 	border-radius: 0;
 }
+
+.mycards {
+	border-radius: 0 !important;
+}

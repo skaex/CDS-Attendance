@@ -5,9 +5,9 @@
     on-refresh="refresh()">
   </ion-refresher>
  <div class="list card" ng-repeat="group in groups">
-  <a href="#/tab/report/{{group.ID}}"  class="item item-icon-left">
-    <i class="icon ion-clipboard"></i>
-    {{ group.NAME }} CDS Group
+  <a href="#/tab/report/{{group.id}}"  class="item item-icon-left">
+    <i class="icon ion-stats-bars"></i>
+    {{ group.cds }} CDS Group Report
   </a>
   </div>
   </ion-content>

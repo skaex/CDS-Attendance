@@ -47,12 +47,24 @@ angular.module('starter', ['ionic', 'ngCordova', 'starter.controllers', 'starter
     cache: false,
     url: '/new/:id',
     views: {
-      'tab-new': {
+      'tab-meeting': {
         templateUrl: 'templates/tab-new.html',
         controller: 'NewCtrl'
       }
     }
   })
+
+  .state('tab.newmembers', {
+    cache: false,
+    url: '/newmembers/:id',
+    views: {
+      'tab-new': {
+        templateUrl: 'templates/tab-newmembers.html',
+        controller: 'NewMembersCtrl'
+      }
+    }
+  })
+
 
   .state('tab.report', {
     cache: false,
@@ -87,37 +99,27 @@ angular.module('starter', ['ionic', 'ngCordova', 'starter.controllers', 'starter
     }
   })
 
+  .state('tab.meetgrp', {
+    cache: false,
+    url: '/meetgrp',
+    views: {
+      'tab-meeting': {
+        templateUrl: 'templates/meeting-cdsgroups.html',
+        controller: 'MeetingCdsCtrl'
+      }
+    }
+  })
+
   .state('tab.attendance', {
       cache: false,
       url: '/attendance',
       views: {
-        'tab-new': {
+        'tab-meeting': {
           templateUrl: 'templates/tab-attendance.html',
           controller: 'AttendanceCtrl'
         }
       }
-    })
-    .state('chat-detail', {
-      cache: false,
-      url: '/chats/:chatId',
-      views: {
-        'tab-chats': {
-          templateUrl: 'templates/chat-detail.html',
-          controller: 'ChatDetailCtrl'
-        }
-      }
-    })
-
-  .state('tab.account', {
-    cache: false,
-    url: '/account',
-    views: {
-      'tab-account': {
-        templateUrl: 'templates/tab-account.html',
-        controller: 'AccountCtrl'
-      }
-    }
-  });
+    });
 
   // if none of the above states are matched, use this as the fallback
     $urlRouterProvider.otherwise('/tab/newgrp');

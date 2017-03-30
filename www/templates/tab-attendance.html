@@ -2,17 +2,18 @@
   <ion-content>
 <div class="card">
   <div class="item item-text-wrap">
-    #{{ attendance.meetingGroup }}CDS Group's Attendance on {{ attendance.meetingDate }}
+    #{{ meeting.groupId }} {{ group }} CDS Group's Attendance on {{ meeting.meetingDate }}
   </div>
 </div>
 <div class="padding">
  <button ng-click="take()" class="button button-outline button-block button-balanced">
-  Take <span class="badge badge-balanced" style="font-size: 80%">#{{ counta + 1 }}</span>
+  Take <span class="badge badge-balanced" style="font-size: 80%">Attendance</span>
 </button>
 </div>
 <div class="card">
   <div class="item item-text-wrap">
-   <span style="font-size: 80%">{{ response.entry }} </span><span ng-show="response.exist" class="badge badge-royal" style="font-size: 80%">taken</span>
+   <span style="font-size: 60%">{{ details }} </span><span style="font-size: 60%" ng-if="existing" class="badge badge-royal" style="font-size: 70%">Already taken</span>
+   <span style="font-size: 50%" ng-if="nomember" class="badge badge-assertive" style="font-size: 40%">Not a member</span>
   </div>
 </div>
 <div class="padding">
